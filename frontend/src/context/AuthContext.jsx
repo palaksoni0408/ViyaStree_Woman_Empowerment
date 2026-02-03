@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../api'
 
 const AuthContext = createContext(null)
 
@@ -33,7 +34,7 @@ export function AuthProvider({ children }) {
             const token = localStorage.getItem('token')
             if (token) {
                 try {
-                    const res = await fetch('/api/v1/auth/me', {
+                    const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     })
                     if (res.ok) {
@@ -60,7 +61,7 @@ export function AuthProvider({ children }) {
 
     async function login(email, password) {
         try {
-            const res = await fetch('/api/v1/auth/login', {
+            const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -81,7 +82,7 @@ export function AuthProvider({ children }) {
 
     async function signup(name, email, password, location) {
         try {
-            const res = await fetch('/api/v1/auth/signup', {
+            const res = await fetch(`${API_BASE}/api/v1/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password, location })
@@ -109,7 +110,7 @@ export function AuthProvider({ children }) {
     async function completeCourse(courseId, quizScore = 85) {
         if (!user) return
         try {
-            const resp = await fetch('/api/v1/shiksha/update-progress', {
+            const resp = await fetch(`${API_BASE}/api/v1/shiksha/update-progress`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user.userId, courseId, action: 'complete', quizScore })
@@ -138,7 +139,7 @@ export function AuthProvider({ children }) {
     async function saveOpportunity(opportunityId) {
         if (!user) return
         try {
-            const resp = await fetch('/api/v1/samruddhih/save-opportunity', {
+            const resp = await fetch(`${API_BASE}/api/v1/samruddhih/save-opportunity`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user.userId, opportunityId })
@@ -160,7 +161,7 @@ export function AuthProvider({ children }) {
     async function askLegalQuery(query) {
         if (!user) return { error: 'Please login' }
         try {
-            const resp = await fetch('/api/v1/shaktih/legal-query', {
+            const resp = await fetch(`${API_BASE}/api/v1/shaktih/legal-query`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user.userId, query })

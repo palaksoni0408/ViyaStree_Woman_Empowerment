@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE } from '../api'
 import PageHeader from '../components/base/PageHeader'
 import InfoCard from '../components/base/InfoCard'
 import MetricCard from '../components/base/MetricCard'
@@ -393,7 +394,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user?.userId) {
-      fetch(`/api/v1/orchestration/dashboard?userId=${user.userId}`)
+      fetch(`${API_BASE}/api/v1/orchestration/dashboard?userId=${user.userId}`)
         .then(r => r.json())
         .then(d => {
           setData(d)

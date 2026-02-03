@@ -49,13 +49,14 @@ This guide covers deploying ViyaStree to **Render** (backend) and **Vercel** (fr
    - **Start Command**: `npm start`
 
 3. **Set Environment Variables**:
-   Click "Advanced" → "Add Environment Variable":
-   ```
-   NODE_ENV=production
-   PORT=10000
-   MONGO_URI=<your-mongodb-atlas-connection-string>
-   JWT_SECRET=<generate-a-random-secret-string>
-   ```
+   Click "Advanced" → "Add Environment Variable". Set these in the **Render dashboard** (never commit real values to git):
+
+   | Key | Value (what to use) |
+   |-----|---------------------|
+   | `NODE_ENV` | `production` |
+   | `PORT` | `10000` |
+   | `MONGO_URI` | Your Atlas connection string. Format: `mongodb+srv://<db_username>:<db_password>@cluster0.ppzyqou.mongodb.net/viyastree?retryWrites=true&w=majority` — replace `<db_username>` with your Atlas database user (e.g. `hades21blasio_db_user`), `<db_password>` with that user's password. If the password has special characters, [URL-encode](https://www.w3schools.com/tags/ref_urlencode.asp) them. |
+   | `JWT_SECRET` | A long random string (32+ characters). Generate one with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` — copy the output and paste it as the value. |
 
 4. **Health Check**:
    - Health Check Path: `/api/v1/orchestration/health`
@@ -108,9 +109,9 @@ The `vercel.json` file is already configured. Update it with your backend URL:
 
 3. **Set Environment Variables**:
    Click "Environment Variables" → Add:
-   ```
-   VITE_API_URL=https://viyastree-backend.onrender.com
-   ```
+   | Key | Value |
+   |-----|--------|
+   | `VITE_API_URL` | Your backend URL, e.g. `https://viyastree-backend.onrender.com` |
 
 4. **Deploy**:
    - Click "Deploy"

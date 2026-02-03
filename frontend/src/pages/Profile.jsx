@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE } from '../api'
 import PageHeader from '../components/base/PageHeader'
 import InfoCard from '../components/base/InfoCard'
 
@@ -52,7 +53,7 @@ export default function Profile() {
 
         try {
             const token = localStorage.getItem('token')
-            const res = await fetch('/api/v1/auth/profile', {
+            const res = await fetch(`${API_BASE}/api/v1/auth/profile`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`

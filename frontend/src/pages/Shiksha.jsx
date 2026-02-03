@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE } from '../api'
 import PageHeader from '../components/base/PageHeader'
 import InfoCard from '../components/base/InfoCard'
 import Badge from '../components/base/Badge'
@@ -335,7 +336,7 @@ export default function Shiksha() {
   }
 
   useEffect(() => {
-    fetch('/api/v1/shiksha/courses')
+    fetch(`${API_BASE}/api/v1/shiksha/courses`)
       .then(r => {
         if (!r.ok) throw new Error('Network response was not ok')
         return r.json()
@@ -444,6 +445,20 @@ export default function Shiksha() {
       }
     } catch (e) {
       console.warn('Hindi voice not supported', e)
+    }
+  }
+
+  function playVoiceEnglish(text) {
+    try {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+        const utter = new SpeechSynthesisUtterance(text)
+        utter.lang = 'en-IN'
+        utter.rate = 0.95
+        window.speechSynthesis.speak(utter)
+      }
+    } catch (e) {
+      console.warn('English voice not supported', e)
     }
   }
 
@@ -1091,152 +1106,340 @@ export default function Shiksha() {
             </div>
 
             {/* 🧑‍🏫 GURUSAKHI - AI MENTOR SECTION */}
-            <div style={{ marginTop: '48px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                <div style={{ padding: '10px', background: `${COLORS.primary}15`, borderRadius: '12px', fontSize: '24px' }}>🧑‍🏫</div>
-                <div>
-                  <h2 style={{ color: COLORS.textPrimary, margin: 0, fontSize: '24px', fontWeight: '700' }}>GuruSakhi — Your AI Mentor</h2>
-                  <p style={{ margin: '4px 0 0 0', color: COLORS.textSecondary, fontSize: '14px' }}>Expert guidance for your career, legal rights, and professional growth</p>
+            <div style={{ marginTop: '48px', background: '#fdf6ec', borderRadius: '24px', padding: '24px', border: '1px solid #f3e8d3' }}>
+              <div style={{ display: 'flex', alignItems: 'stretch', gap: '20px', flexWrap: 'wrap', marginBottom: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', flex: '1 1 360px', minWidth: '260px' }}>
+                  <div style={{ padding: '10px', background: '#e2f1eb', borderRadius: '12px', fontSize: '24px' }}>🧑‍🏫</div>
+                  <div>
+                    <h2 style={{ color: '#0f3d33', margin: 0, fontSize: '24px', fontWeight: '700' }}>GuruSakhi — Your AI Mentor</h2>
+                    <p style={{ margin: '6px 0 0 0', color: '#4b5563', fontSize: '14px' }}>Guidance, protection, and support — when you need it</p>
+                    <div style={{ marginTop: '8px', fontStyle: 'italic', color: '#6b7280', fontSize: '14px' }}>
+                      “You are not alone. Ask. Learn. Act.”
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  flex: '0 1 300px',
+                  minWidth: '240px',
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  border: '1px solid #e5e7eb',
+                  padding: '16px',
+                  boxShadow: '0 10px 20px rgba(15, 61, 51, 0.08)'
+                }}>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f3d33', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    🎧 Bilingual Audio Guide
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#4b5563', marginBottom: '12px' }}>
+                    Listen in Hindi or English — no reading needed.
+                  </div>
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    <button
+                      onClick={() => playVoiceHindi('गुरुसखी आपकी करियर, कानूनी अधिकार और मार्गदर्शन में मदद करती है। आप पढ़ने के बजाय सुन सकती हैं।')}
+                      style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🔊 हिंदी में सुनें
+                    </button>
+                    <button
+                      onClick={() => playVoiceEnglish('GuruSakhi is your AI mentor for career support, legal guidance, and trusted help. You can listen instead of reading.')}
+                      style={{ background: '#e2f1eb', color: '#0f3d33', border: '1px solid #0f3d33', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🔊 Listen in English
+                    </button>
+                  </div>
+                  <div style={{ marginTop: '10px', fontSize: '11px', color: '#6b7280' }}>
+                    Free & confidential · You can listen instead of reading
+                  </div>
                 </div>
               </div>
 
-              <div className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '24px' }}>
+                <Badge style={{ background: '#0f3d33', color: 'white' }}>Verified by Government sources</Badge>
+                <Badge style={{ background: '#7f1d1d', color: 'white' }}>Free & confidential</Badge>
+                <Badge style={{ background: '#fef3c7', color: '#92400e' }}>Beginner friendly</Badge>
+                <Badge style={{ background: '#e2e8f0', color: '#1f2937' }}>You can listen instead of reading</Badge>
+              </div>
+
+              <div className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
 
                 {/* Career Sakhi */}
-                <div className="card-vibrant" style={{
-                  padding: '28px',
+                <div style={{
+                  padding: '24px',
                   borderRadius: '20px',
-                  background: 'linear-gradient(145deg, #ffffff 0%, #fefce8 100%)',
-                  border: '1px solid #fde047',
-                  boxShadow: '0 4px 20px rgba(234, 179, 8, 0.1)',
+                  background: '#fffaf0',
+                  border: '1px solid #e7d2b8',
+                  boxShadow: '0 8px 24px rgba(15, 61, 51, 0.08)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  {/* Decorative Circle */}
-                  <div style={{ position: 'absolute', top: -20, right: -20, width: '100px', height: '100px', background: 'radial-gradient(circle, #fde04740 0%, transparent 70%)', borderRadius: '50%' }}></div>
+                  <div style={{ position: 'absolute', inset: 'auto -40px -40px auto', width: '120px', height: '120px', background: 'radial-gradient(circle, #0f3d331a 0%, transparent 70%)', borderRadius: '50%' }}></div>
 
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <div style={{ background: '#fef9c3', padding: '12px', borderRadius: '14px', fontSize: '28px', color: '#ca8a04' }}>💼</div>
-                    <div style={{ padding: '6px 12px', background: '#ca8a04', color: 'white', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Job Ready</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                    <div style={{ background: '#e2f1eb', padding: '10px', borderRadius: '14px', fontSize: '22px' }}>💼</div>
+                    <div style={{ background: '#0f3d33', color: 'white', padding: '6px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: '700' }}>Career Sakhi</div>
                   </div>
 
-                  <h3 style={{ color: '#854d0e', margin: '0 0 8px 0', fontSize: '22px', fontWeight: '700' }}>Career Sakhi</h3>
-                  <p style={{ color: '#713f12', marginBottom: '24px', fontSize: '15px', lineHeight: '1.6' }}>Build a winning resume, prepare for interviews, and get guidance for your first job.</p>
+                  <div style={{ color: '#0f3d33', fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>Your guide for jobs, resumes &amp; interviews</div>
+                  <div style={{ color: '#4b5563', fontSize: '13px', marginBottom: '12px' }}>Perfect for first job seekers, career switchers &amp; return-to-work women</div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid #fde047', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#a16207', marginBottom: '8px', textTransform: 'uppercase' }}>📹 Featured Video</div>
-                    <div
-                      onClick={() => window.open('https://youtu.be/mmQcX6HpCGs?si=5z_mLkOnNGqQyR6M', '_blank')}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#854d0e', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
-                      <span>▶️</span> <span style={{ textDecoration: 'underline' }}>"How to Ace Your First Interview"</span>
+                  <div style={{ background: '#fef3c7', borderRadius: '12px', padding: '12px', marginBottom: '12px', border: '1px solid #fcd34d' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#92400e', marginBottom: '8px' }}>🎥 Learn</div>
+                    <div style={{ display: 'grid', gap: '6px' }}>
+                      <button
+                        onClick={() => window.open('https://www.youtube.com/watch?v=ZK2k5m5U5qA', '_blank', 'noopener,noreferrer')}
+                        style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', color: '#7c2d12', fontSize: '13px', fontWeight: '600', textDecoration: 'underline' }}
+                      >
+                        📺 How to Face Your First Interview (Hindi)
+                      </button>
+                      <button
+                        onClick={() => window.open('https://www.youtube.com/@NationalCareerServiceIndia', '_blank', 'noopener,noreferrer')}
+                        style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', color: '#7c2d12', fontSize: '13px', fontWeight: '600', textDecoration: 'underline' }}
+                      >
+                        📺 NCS India – Career Counseling Playlist
+                      </button>
+                      <div style={{ fontSize: '11px', color: '#92400e' }}>Source: NCS India</div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f3d33', marginBottom: '6px' }}>🛠️ What Career Sakhi Helps With</div>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: '#4b5563', lineHeight: '1.6' }}>
+                      <li>Resume &amp; CV building</li>
+                      <li>Interview practice (HR + technical basics)</li>
+                      <li>First-job guidance</li>
+                      <li>Govt &amp; private job portals navigation</li>
+                    </ul>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <button
-                      onClick={() => setGuruModal({ type: 'career', title: '💼 Career Sakhi - AI Mentor', body: 'Career guidance from resume building to interview prep. Learn how to present your skills confidently. Get matched with local mentors.', resources: ['YouTube: NCS India - Career Counseling & Interview Tips', 'Free resume templates from National Career Service'] })}
-                      style={{ flex: 1, background: '#ca8a04', color: 'white', border: 'none', borderRadius: '10px', padding: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '14px', boxShadow: '0 4px 12px rgba(202, 138, 4, 0.3)' }}
+                      onClick={() => setGuruModal({
+                        type: 'career',
+                        title: '💼 Career Sakhi',
+                        body: 'Ask career questions, build a resume, and get interview guidance for your first job.',
+                        resources: ['Verified by Government sources', 'Beginner friendly']
+                      })}
+                      style={{ background: '#0f3d33', color: 'white', border: 'none', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
                     >
-                      Ask Question
+                      🧠 Ask Career Question
                     </button>
                     <button
-                      onClick={() => playVoiceHindi('करियर सखी आपको रिज़्यूम बनाने में, इंटरव्यू की तैयारी में और पहली नौकरी के लिए आवेदन करने में मदद करती है।')}
-                      style={{ width: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fefce8', border: '1px solid #ca8a04', borderRadius: '10px', cursor: 'pointer', fontSize: '20px' }}
+                      onClick={() => window.open('https://www.youtube.com/watch?v=ZK2k5m5U5qA', '_blank', 'noopener,noreferrer')}
+                      style={{ background: 'white', color: '#0f3d33', border: '1px solid #0f3d33', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
                     >
-                      🔊
+                      📺 Watch Interview Video
                     </button>
+                    <button
+                      onClick={() => playVoiceHindi('करियर सखी आपको रिज़्यूम बनाने, इंटरव्यू तैयारी, और पहली नौकरी के लिए मार्गदर्शन देती है।')}
+                      style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🔊 Listen | सुनें
+                    </button>
+                    <button
+                      onClick={() => window.open('https://www.ncs.gov.in/', '_blank', 'noopener,noreferrer')}
+                      style={{ background: 'white', color: '#7f1d1d', border: '1px solid #7f1d1d', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      📄 Build Resume
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: '12px', fontSize: '11px', color: '#6b7280' }}>
+                    Verified by Government sources · You can listen instead of reading
                   </div>
                 </div>
 
                 {/* Legal Sakhi */}
-                <div className="card-vibrant" style={{
-                  padding: '28px',
+                <div style={{
+                  padding: '24px',
                   borderRadius: '20px',
-                  background: 'linear-gradient(145deg, #ffffff 0%, #fff7ed 100%)',
-                  border: '1px solid #fdba74',
-                  boxShadow: '0 4px 20px rgba(249, 115, 22, 0.1)',
+                  background: '#fff5f5',
+                  border: '1px solid #f1c4c4',
+                  boxShadow: '0 8px 24px rgba(127, 29, 29, 0.12)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  <div style={{ position: 'absolute', top: -20, right: -20, width: '100px', height: '100px', background: 'radial-gradient(circle, #fdba7440 0%, transparent 70%)', borderRadius: '50%' }}></div>
+                  <div style={{ position: 'absolute', inset: '-30px -30px auto auto', width: '120px', height: '120px', background: 'radial-gradient(circle, #7f1d1d1a 0%, transparent 70%)', borderRadius: '50%' }}></div>
 
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <div style={{ background: '#ffedd5', padding: '12px', borderRadius: '14px', fontSize: '28px', color: '#c2410c' }}>⚖️</div>
-                    <div style={{ padding: '6px 12px', background: '#ea580c', color: 'white', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Legal Aid</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                    <div style={{ background: '#fee2e2', padding: '10px', borderRadius: '14px', fontSize: '22px' }}>⚖️</div>
+                    <div style={{ background: '#7f1d1d', color: 'white', padding: '6px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: '700' }}>Legal Sakhi</div>
                   </div>
 
-                  <h3 style={{ color: '#9a3412', margin: '0 0 8px 0', fontSize: '22px', fontWeight: '700' }}>Legal Sakhi</h3>
-                  <p style={{ color: '#7c2d12', marginBottom: '24px', fontSize: '15px', lineHeight: '1.6' }}>Guidance on property rights, POSH, and domestic concerns. Know your rights.</p>
+                  <div style={{ color: '#7f1d1d', fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>Know your rights. Stay protected.</div>
+                  <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '12px' }}>Confidential, verified, and women-first</div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid #fdba74', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#c2410c' }}>☎️ HELPLINE</span>
-                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#16a34a' }}>● Available Now</span>
+                  <div style={{ background: '#fff1f2', borderRadius: '12px', padding: '12px', marginBottom: '12px', border: '1px solid #fecdd3' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#7f1d1d', marginBottom: '8px' }}>📺 Learn Your Rights</div>
+                    <div style={{ display: 'grid', gap: '6px' }}>
+                      <button
+                        onClick={() => window.open('https://www.youtube.com/@MinistryWCD', '_blank', 'noopener,noreferrer')}
+                        style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', color: '#7f1d1d', fontSize: '13px', fontWeight: '600', textDecoration: 'underline' }}
+                      >
+                        📺 WCD India – Legal Awareness for Women
+                      </button>
+                      <button
+                        onClick={() => window.open('https://www.youtube.com/watch?v=LyqMPBNR8Pw', '_blank', 'noopener,noreferrer')}
+                        style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', color: '#7f1d1d', fontSize: '13px', fontWeight: '600', textDecoration: 'underline' }}
+                      >
+                        📺 POSH Act Explained (Simple Hindi)
+                      </button>
                     </div>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#9a3412' }}>1800-LEGAL-HELP</div>
-                    <div style={{ fontSize: '12px', color: '#c2410c', marginTop: '4px' }}>Mon-Fri, 10 AM - 6 PM</div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ background: '#fef2f2', borderRadius: '12px', padding: '12px', marginBottom: '12px', border: '1px solid #fecaca' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#7f1d1d', marginBottom: '6px' }}>☎️ Support Availability</div>
+                    <div style={{ fontSize: '12px', color: '#4b5563' }}>🕙 Mon–Fri | 10 AM – 6 PM</div>
+                    <div style={{ fontSize: '12px', color: '#4b5563' }}>📞 Women Helpline (India): 181</div>
+                    <div style={{ fontSize: '12px', color: '#b91c1c', fontWeight: '700' }}>🚨 Emergency: 112</div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <button
-                      onClick={() => setGuruModal({ type: 'legal', title: '⚖️ Legal Sakhi - Schedule Call', body: 'Legal guidance on property rights, workplace harassment (POSH), domestic concerns. Connect with trained legal advisors anonymously.', phone: '+91-1800-LEGAL-HELP' })}
-                      style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #c2410c', borderRadius: '10px', padding: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                      onClick={() => setGuruModal({
+                        type: 'legal',
+                        title: '⚖️ Legal Sakhi',
+                        body: 'Ask legal questions about POSH, property rights, and domestic concerns. Free & confidential.',
+                        phone: 'Women Helpline: 181'
+                      })}
+                      style={{ background: '#7f1d1d', color: 'white', border: 'none', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
                     >
-                      Schedule Call
+                      ⚖️ Ask Legal Question
                     </button>
                     <button
-                      onClick={() => setGuruModal({ type: 'legal-urgent', title: '⚖️ Legal Sakhi - Emergency Help', body: 'Immediate legal support for urgent situations. Connect now with trained advisors.', phone: '+91-1800-111-222' })}
-                      style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '10px', padding: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)' }}
+                      onClick={() => setGuruModal({
+                        type: 'legal-call',
+                        title: '📞 Schedule Call',
+                        body: 'Schedule a call with verified legal advisors. Free & confidential.',
+                        phone: '181 (Women Helpline)'
+                      })}
+                      style={{ background: 'white', color: '#7f1d1d', border: '1px solid #7f1d1d', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
                     >
-                      Emergency 🆘
+                      📞 Schedule Call
                     </button>
+                    <button
+                      onClick={() => window.open('tel:112')}
+                      style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}
+                    >
+                      🚨 Emergency Help
+                    </button>
+                    <button
+                      onClick={() => playVoiceHindi('लीगल सखी आपके अधिकारों की रक्षा के लिए मार्गदर्शन देती है। आप 181 पर कॉल कर सकती हैं। आप चाहें तो पढ़ने के बजाय सुन सकती हैं।')}
+                      style={{ background: '#fee2e2', color: '#7f1d1d', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🔊 Listen | सुनें
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: '12px', fontSize: '11px', color: '#6b7280' }}>
+                    Your identity is kept confidential
                   </div>
                 </div>
 
                 {/* Mentorship Connect */}
-                <div className="card-vibrant" style={{
-                  padding: '28px',
+                <div style={{
+                  padding: '24px',
                   borderRadius: '20px',
-                  background: 'linear-gradient(145deg, #ffffff 0%, #ecfeff 100%)',
-                  border: '1px solid #67e8f9',
-                  boxShadow: '0 4px 20px rgba(6, 182, 212, 0.1)',
+                  background: '#f3f7f2',
+                  border: '1px solid #cbd5c0',
+                  boxShadow: '0 8px 24px rgba(15, 61, 51, 0.08)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  <div style={{ position: 'absolute', top: -20, right: -20, width: '100px', height: '100px', background: 'radial-gradient(circle, #67e8f940 0%, transparent 70%)', borderRadius: '50%' }}></div>
+                  <div style={{ position: 'absolute', inset: '-30px auto auto -30px', width: '120px', height: '120px', background: 'radial-gradient(circle, #0f3d331a 0%, transparent 70%)', borderRadius: '50%' }}></div>
 
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <div style={{ background: '#cffafe', padding: '12px', borderRadius: '14px', fontSize: '28px', color: '#0891b2' }}>🤝</div>
-                    <div style={{ padding: '6px 12px', background: '#0891b2', color: 'white', borderRadius: '20px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Community</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                    <div style={{ background: '#e6efe8', padding: '10px', borderRadius: '14px', fontSize: '22px' }}>🤝</div>
+                    <div style={{ background: '#0f3d33', color: 'white', padding: '6px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: '700' }}>Mentorship</div>
                   </div>
 
-                  <h3 style={{ color: '#155e75', margin: '0 0 8px 0', fontSize: '22px', fontWeight: '700' }}>Mentorship Connect</h3>
-                  <p style={{ color: '#164e63', marginBottom: '24px', fontSize: '15px', lineHeight: '1.6' }}>Match with experienced women mentors in your field. 1-on-1 sessions.</p>
+                  <div style={{ color: '#0f3d33', fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>Learn from women who’ve been where you are</div>
+                  <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '12px' }}>Real mentors. Real guidance. Online.</div>
 
-                  <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid #67e8f9', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ display: 'flex', marginLeft: '10px' }}>
-                        {[1, 2, 3].map(i => (
-                          <div key={i} style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0891b2', border: '2px solid white', marginLeft: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px' }}>👩</div>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#155e75', fontWeight: '500' }}>
-                        150+ Mentors Online
-                      </div>
-                    </div>
+                  <div style={{ background: '#ffffff', borderRadius: '12px', padding: '12px', marginBottom: '12px', border: '1px solid #d1d5db' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f3d33', marginBottom: '6px' }}>🌐 How It Works</div>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: '#4b5563', lineHeight: '1.6' }}>
+                      <li>Mentors are trained &amp; verified</li>
+                      <li>Available across careers, business, tech, teaching</li>
+                      <li>Online sessions (safe &amp; flexible)</li>
+                    </ul>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ background: '#fff7ed', borderRadius: '12px', padding: '12px', marginBottom: '12px', border: '1px solid #fed7aa' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#7f1d1d', marginBottom: '6px' }}>⏱️ Session Options</div>
+                    <div style={{ fontSize: '12px', color: '#4b5563' }}>🆓 30 min — Free</div>
+                    <div style={{ fontSize: '12px', color: '#4b5563' }}>⭐ 60 min — Premium</div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <button
-                      onClick={() => setGuruModal({ type: 'mentor', title: '🤝 Find Your Mentor', body: 'Connect with experienced women professionals. Share goals, get guidance, build confidence.', availability: 'Mon-Sun, 6 PM - 10 PM' })}
-                      style={{ flex: 1, background: '#0891b2', color: 'white', border: 'none', borderRadius: '10px', padding: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '14px', boxShadow: '0 4px 12px rgba(8, 145, 178, 0.3)' }}
+                      onClick={() => setGuruModal({
+                        type: 'mentor',
+                        title: '🤝 Find a Mentor',
+                        body: 'Get matched with verified women mentors for career or business guidance.',
+                        availability: 'Online sessions available'
+                      })}
+                      style={{ background: '#0f3d33', color: 'white', border: 'none', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
                     >
-                      Find Mentor
+                      🤝 Find a Mentor
                     </button>
+                    <button
+                      onClick={() => setGuruModal({
+                        type: 'mentor-question',
+                        title: '🧠 Ask Mentor Question',
+                        body: 'Ask a mentor a quick question and get a trusted response.',
+                        availability: 'Typically replies within 24 hours'
+                      })}
+                      style={{ background: 'white', color: '#0f3d33', border: '1px solid #0f3d33', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🧠 Ask Mentor Question
+                    </button>
+                    <button
+                      onClick={() => playVoiceHindi('मेंटोरशिप कनेक्ट में आप अनुभवी महिलाओं से मार्गदर्शन पा सकती हैं।')}
+                      style={{ background: '#e6efe8', color: '#0f3d33', border: '1px solid #cbd5c0', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🔊 Listen | सुनें
+                    </button>
+                    <button
+                      onClick={() => setGuruModal({
+                        type: 'mentor-guide',
+                        title: '🧭 Mentorship Guidelines',
+                        body: 'Safe, respectful, and supportive mentoring. Your comfort comes first.',
+                        resources: ['Verified mentors', 'Safe online sessions']
+                      })}
+                      style={{ background: 'white', color: '#7f1d1d', border: '1px solid #7f1d1d', borderRadius: '10px', padding: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+                    >
+                      🧭 Session Guidelines
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: '12px', fontSize: '11px', color: '#6b7280' }}>
+                    Verified by Government sources · Beginner friendly
                   </div>
                 </div>
 
               </div>
+
+              <button
+                className="btn"
+                style={{
+                  position: 'fixed',
+                  right: '24px',
+                  bottom: '24px',
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '999px',
+                  padding: '12px 18px',
+                  fontWeight: '700',
+                  boxShadow: '0 10px 20px rgba(220, 38, 38, 0.35)',
+                  cursor: 'pointer',
+                  zIndex: 1300
+                }}
+                onClick={() => window.open('tel:112')}
+              >
+                🚨 Emergency 112
+              </button>
             </div>
 
             {/* 🧠 MANASSAKHI - MENTAL HEALTH SECTION */}

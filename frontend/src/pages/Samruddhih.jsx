@@ -43,6 +43,18 @@ export default function Samruddhih() {
   const [udyamModal, setUdyamModal] = useState(null)
   const [kutumbModal, setKutumbModal] = useState(null)
   const [jobDetailModal, setJobDetailModal] = useState(null)
+  const [fundingIntent, setFundingIntent] = useState('')
+  const [literacyDone, setLiteracyDone] = useState(false)
+  const [businessPlan, setBusinessPlan] = useState({
+    idea: '',
+    market: '',
+    tools: '',
+    cost: '',
+    sales: '',
+    purpose: ''
+  })
+  const [planGenerated, setPlanGenerated] = useState(false)
+  const [planError, setPlanError] = useState('')
 
   // Playback function for Hindi audio
   function playVoiceHindi(text) {
@@ -148,6 +160,20 @@ export default function Samruddhih() {
     const missing = oppSkills.filter(s => !userSkills.includes(s))
     return { matched, missing }
   }
+
+  const completedSkills = getUserSkills().map(s => s.toLowerCase())
+  const trustScore = Math.min(100, (completedSkills.length * 12) + (businessMindsetAnswers.profit === 'b' ? 10 : 0))
+  const trustLabel = trustScore >= 70 ? 'High' : trustScore >= 40 ? 'Moderate' : 'Low'
+  const hasFinancialBadge = completedSkills.some(s => s.includes('finance') || s.includes('financial') || s.includes('upi'))
+  const aadhaarLinked = user?.profile?.aadhaarLinked === true
+  const mindsetPassed = businessMindsetAnswers.profit === 'b'
+
+  const estimatedProfit = (() => {
+    const cost = parseFloat(businessPlan.cost)
+    const sales = parseFloat(businessPlan.sales)
+    if (Number.isNaN(cost) || Number.isNaN(sales)) return null
+    return sales - cost
+  })()
 
   return (
     <main id="main" className="dashboard samruddhih-page">
@@ -514,6 +540,12 @@ export default function Samruddhih() {
                       org: 'Ministry of Women & Child Dev',
                       type: 'Full-time',
                       tag: 'Govt',
+                      roleType: 'Field Coordination',
+                      location: 'Block & District level',
+                      stipend: '₹8,000–₹12,000 / month',
+                      description: 'Coordinate self-help groups (SHGs), track livelihoods, and support community training drives.',
+                      responsibilities: ['Mobilize SHG members', 'Maintain progress registers', 'Coordinate training sessions', 'Report monthly outcomes'],
+                      applyLink: 'https://www.nrlm.gov.in/',
                       benefits: 'eShram Insurance, Health Benefits, Monthly Stipend ₹8000, Travel Allowance',
                       eligibility: ['Age 18-40 years', 'Resident of state', 'Basic literacy (8th pass)', 'Able to work in community']
                     },
@@ -523,6 +555,12 @@ export default function Samruddhih() {
                       org: 'State Health Dept',
                       type: 'Part-time',
                       tag: 'Stable',
+                      roleType: 'Community Care',
+                      location: 'Local Anganwadi Center',
+                      stipend: '₹6,000–₹10,000 / month',
+                      description: 'Support early childhood care, nutrition, and community health awareness.',
+                      responsibilities: ['Track child health records', 'Coordinate nutrition distribution', 'Assist mothers with welfare schemes'],
+                      applyLink: 'https://wcd.nic.in/',
                       benefits: 'Maternity Leave (6 months), Pension Eligibility, Lunch Provided, Educational Support',
                       eligibility: ['Age 21-45 years', '12th pass or higher', 'Health clearance required', 'Resident of village']
                     },
@@ -532,13 +570,19 @@ export default function Samruddhih() {
                       org: 'NITI Aayog',
                       type: 'Contract',
                       tag: 'Skill',
+                      roleType: 'Digital Enablement',
+                      location: 'Community Centers',
+                      stipend: '₹7,000–₹15,000 / month',
+                      description: 'Help local women adopt digital services, payments, and online forms.',
+                      responsibilities: ['Train women on digital tools', 'Assist with online forms', 'Promote digital safety'],
+                      applyLink: 'https://www.niti.gov.in/',
                       benefits: 'Stipend + Incentives, Free Skills Training, Certificate, Career Path to IT Jobs',
                       eligibility: ['Age 18-35 years', 'Smartphone access', 'Willing to train others', 'Tech-savvy']
                     }
                   ].map(job => (
                     <div
                       key={job.id}
-                      onClick={() => setJobDetailModal({ type: 'ngo', ...job })}
+                      onClick={() => setJobDetailModal({ ...job, workType: job.type, type: 'ngo' })}
                       style={{
                         padding: '16px',
                         border: '1px solid #f1f5f9',
@@ -1114,35 +1158,73 @@ export default function Samruddhih() {
                 <>
                   <h2 style={{ marginTop: 0, color: '#1f2937' }}>{jobDetailModal.title}</h2>
                   <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '16px' }}>
-                    {jobDetailModal.org} | {jobDetailModal.role_type}
+                    🏛️ {jobDetailModal.org} {jobDetailModal.workType ? `• ⏱️ ${jobDetailModal.workType}` : ''} {jobDetailModal.location ? `• 📍 ${jobDetailModal.location}` : ''}
                   </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                    {jobDetailModal.tag && (
+                      <span style={{ background: '#ecfccb', color: '#4d7c0f', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '600' }}>
+                        {jobDetailModal.tag}
+                      </span>
+                    )}
+                    {jobDetailModal.roleType && (
+                      <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '600' }}>
+                        Role: {jobDetailModal.roleType}
+                      </span>
+                    )}
+                    {jobDetailModal.stipend && (
+                      <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '600' }}>
+                        Stipend: {jobDetailModal.stipend}
+                      </span>
+                    )}
+                  </div>
+
+                  {jobDetailModal.description && (
+                    <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                      <strong>🧾 Role Summary</strong>
+                      <p style={{ margin: '8px 0', fontSize: '13px' }}>{jobDetailModal.description}</p>
+                    </div>
+                  )}
+
+                  {jobDetailModal.responsibilities?.length > 0 && (
+                    <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                      <strong>✅ Key Responsibilities</strong>
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px', fontSize: '13px' }}>
+                        {jobDetailModal.responsibilities.map((resp, i) => <li key={i}>{resp}</li>)}
+                      </ul>
+                    </div>
+                  )}
 
                   <div style={{ background: '#f0fdf4', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
                     <strong>🎁 Benefits Summary</strong>
                     <ul style={{ margin: '8px 0', paddingLeft: '20px', fontSize: '13px' }}>
-                      {jobDetailModal.benefits.split(',').map((b, i) => <li key={i}>{b.trim()}</li>)}
+                      {jobDetailModal.benefits
+                        ? jobDetailModal.benefits.split(',').map((b, i) => <li key={i}>{b.trim()}</li>)
+                        : <li>Benefits details available on the official portal.</li>}
                     </ul>
                   </div>
 
                   <div style={{ background: '#dbeafe', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
                     <strong>✅ Eligibility Checklist</strong>
                     <ul style={{ margin: '8px 0', paddingLeft: '20px', fontSize: '13px' }}>
-                      {jobDetailModal.eligibility.map((e, i) => <li key={i}>☐ {e}</li>)}
+                      {jobDetailModal.eligibility?.length
+                        ? jobDetailModal.eligibility.map((e, i) => <li key={i}>☐ {e}</li>)
+                        : <li>Eligibility details available on the official portal.</li>}
                     </ul>
                   </div>
 
-                  <div style={{ background: '#fce7f3', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
-                    <strong>🔐 Document Vault Integration</strong>
-                    <p style={{ margin: '8px 0', fontSize: '13px' }}>Attach your documents securely:</p>
-                    <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>Attach Aadhaar/eShram Card</button>
-                  </div>
-
                   <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                    <button className="btn btn-primary" style={{ flex: 1 }}>Official NCS Link</button>
+                    <button
+                      className="btn btn-primary"
+                      style={{ flex: 1 }}
+                      onClick={() => jobDetailModal.applyLink && window.open(jobDetailModal.applyLink, '_blank', 'noopener,noreferrer')}
+                    >
+                      Open Official Portal ↗
+                    </button>
                     <button className="btn btn-ghost" style={{ flex: 1 }}>Ask GuruSakhi</button>
                   </div>
 
-                  <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => playVoiceHindi(`${jobDetailModal.title}। लाभ: ${jobDetailModal.benefits}। आयु सीमा: ${jobDetailModal.eligibility[0]}।`)}>
+                  <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => playVoiceHindi(`${jobDetailModal.title}। लाभ: ${jobDetailModal.benefits || 'विवरण आधिकारिक पोर्टल पर है'}। योग्यता: ${jobDetailModal.eligibility?.[0] || 'विवरण आधिकारिक पोर्टल पर है'}।`)}>
                     🔊 सुनें (हिंदी)
                   </button>
                 </>
@@ -1191,11 +1273,13 @@ export default function Samruddhih() {
                 {udyamModal.type === 'startup' && <span style={{ fontSize: '24px' }}>📋</span>}
                 {udyamModal.type === 'progress' && <span style={{ fontSize: '24px' }}>📊</span>}
                 {udyamModal.type === 'tools' && <span style={{ fontSize: '24px' }}>🛠️</span>}
+                {udyamModal.type === 'apply' && <span style={{ fontSize: '24px' }}>✅</span>}
 
-                {udyamModal.type === 'loan' && 'Financial Aid & Loans'}
-                {udyamModal.type === 'startup' && 'Your Business Plan'}
+                {udyamModal.type === 'loan' && 'Loan Readiness & Eligibility'}
+                {udyamModal.type === 'startup' && 'Mera Sapna, Mera Vyapaar'}
                 {udyamModal.type === 'progress' && 'Entrepreneur Roadmap'}
                 {udyamModal.type === 'tools' && 'Business Toolkit'}
+                {udyamModal.type === 'apply' && 'Microfunding Application'}
               </h3>
               <button onClick={() => setUdyamModal(null)} style={{ border: 'none', background: '#e2e8f0', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>✕</button>
             </div>
@@ -1203,40 +1287,622 @@ export default function Samruddhih() {
             <div style={{ padding: '24px' }}>
               {udyamModal.type === 'loan' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ padding: '16px', background: '#ecfccb', borderRadius: '16px', border: '1px solid #d9f99d' }}>
-                    <h4 style={{ margin: '0 0 8px 0', color: '#3f6212' }}>⚡ Recommended: MUDRA Shishu Loan</h4>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#4d7c0f' }}>Perfect for starting small shops. Loan up to ₹50,000 with no processing fee.</p>
+                  <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ margin: '0 0 12px 0', color: COLORS.textPrimary }}>🛠️ Trust-First Microfunding Flow</h4>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      <div style={{ background: 'white', borderRadius: '12px', padding: '12px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontWeight: 700, color: COLORS.textPrimary, marginBottom: '6px' }}>Step 1: Purpose Selection</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>Choose your Funding Intent</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {['Home business', 'Sewing machine', 'Laptop for digital work', 'Emergency livelihood support'].map(intent => (
+                            <button
+                              key={intent}
+                              className="btn"
+                              style={{
+                                background: fundingIntent === intent ? COLORS.primary : 'white',
+                                color: fundingIntent === intent ? 'white' : COLORS.textSecondary,
+                                border: `1px solid ${COLORS.border}`,
+                                borderRadius: '999px',
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: 600
+                              }}
+                              onClick={() => setFundingIntent(intent)}
+                            >
+                              {intent}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={{ background: '#fff7ed', borderRadius: '12px', padding: '12px', border: '1px solid #fed7aa' }}>
+                        <div style={{ fontWeight: 700, color: '#9a3412', marginBottom: '6px' }}>Step 2: Eligibility Light-Check</div>
+                        <div style={{ fontSize: '12px', color: '#7c2d12', marginBottom: '10px' }}>
+                          Self-declaration + Aadhaar (no heavy KYC). Skill progress boosts your Trust Score.
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '12px' }}>
+                          <div style={{ fontSize: '12px', color: '#0f172a' }}>
+                            Completed {completedSkills.length} Shiksha modules · Trust Score <strong>{trustLabel}</strong>
+                          </div>
+                          <div style={{ background: '#fff1f2', color: '#9f1239', padding: '4px 10px', borderRadius: '999px', fontWeight: 700, fontSize: '11px' }}>
+                            {trustScore}/100
+                          </div>
+                        </div>
+                        <div style={{ width: '100%', height: '8px', background: '#fee2e2', borderRadius: '999px', overflow: 'hidden' }}>
+                          <div style={{ width: `${trustScore}%`, height: '100%', background: 'linear-gradient(90deg, #f97316, #22c55e)' }}></div>
+                        </div>
+                        <div style={{ display: 'grid', gap: '6px', marginTop: '8px', fontSize: '12px', color: '#1f2937' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Badge Check: Financial Literacy 101</span>
+                            <strong style={{ color: hasFinancialBadge ? '#166534' : '#b45309' }}>{hasFinancialBadge ? 'Verified' : 'Pending'}</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Identity Check: Aadhaar linked</span>
+                            <strong style={{ color: aadhaarLinked ? '#166534' : '#b45309' }}>{aadhaarLinked ? 'Linked' : 'Not linked'}</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Mindset Quiz</span>
+                            <strong style={{ color: mindsetPassed ? '#166534' : '#b45309' }}>{mindsetPassed ? 'Passed' : 'Pending'}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ background: '#f0fdf4', borderRadius: '12px', padding: '12px', border: '1px solid #bbf7d0' }}>
+                        <div style={{ fontWeight: 700, color: '#166534', marginBottom: '6px' }}>Step 3: Literacy Nudge</div>
+                        <div style={{ fontSize: '12px', color: '#14532d', marginBottom: '10px' }}>
+                          Mandatory 5-minute audio-visual module on budgeting & repayment.
+                        </div>
+                        <button
+                          className="btn"
+                          style={{
+                            background: literacyDone ? '#16a34a' : COLORS.primary,
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px 12px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            playVoiceHindi('बजटिंग और पुनर्भुगतान की आसान जानकारी। आय और खर्च लिखें, समय पर भुगतान करें, और अपने व्यवसाय को सुरक्षित रखें।')
+                            setLiteracyDone(true)
+                          }}
+                        >
+                          {literacyDone ? '✓ Module Completed' : 'Start 5-min Audio Module'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <h4 style={{ margin: '8px 0 0 0', color: COLORS.textPrimary }}>Available Schemes</h4>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {[
-                      { name: 'MUDRA Kishore', amount: '₹50K - ₹5L', desc: 'For expanding existing businesses.' },
-                      { name: 'Stand-Up India', amount: '₹10L - ₹1Cr', desc: 'Exclusive for Women & SC/ST entrepreneurs.' },
-                      { name: 'Stree Shakti', amount: 'Variable', desc: 'Interest concession of 0.05% for women.' }
-                    ].map((scheme, i) => (
-                      <div key={i} style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <div style={{ fontWeight: '600', color: COLORS.textPrimary }}>{scheme.name}</div>
-                          <div style={{ fontSize: '12px', color: COLORS.textSecondary }}>{scheme.desc}</div>
-                        </div>
-                        <div style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>{scheme.amount}</div>
-                      </div>
-                    ))}
+                  <div style={{ padding: '16px', background: '#f0f9ff', borderRadius: '16px', border: '1px solid #bae6fd' }}>
+                    <h4 style={{ margin: '0 0 12px 0', color: '#0c4a6e' }}>💰 Loan Categories (Udyam Tiers)</h4>
+                    <div style={{ display: 'grid', gap: '10px', fontSize: '13px', color: '#0f172a' }}>
+                      <div>• Zero-Interest Seed Support (₹2,000 – ₹10,000) — first-time home ventures</div>
+                      <div>• Low-Interest Growth Loan (₹10,000 – ₹50,000) — scale your business</div>
+                      <div>• Group-Backed Microloan — for SHG members</div>
+                      <div>• Grant-Linked Funding — CSR/NGO grants for high-impact sectors</div>
+                    </div>
                   </div>
-                  <button className="btn" style={{ background: COLORS.primary, color: 'white', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', marginTop: '8px', cursor: 'pointer' }}>Check My Eligibility</button>
+
+                  <div style={{ padding: '16px', background: '#fff7ed', borderRadius: '16px', border: '1px solid #fed7aa' }}>
+                    <h4 style={{ margin: '0 0 12px 0', color: '#9a3412' }}>🏛️ Government Resource Integration</h4>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      <button className="btn" style={{ background: '#9a3412', color: 'white', border: 'none', borderRadius: '10px', padding: '8px 12px', fontWeight: '600', cursor: 'pointer' }}
+                        onClick={() => window.open('https://udyamsakhi.msme.gov.in/', '_blank', 'noopener,noreferrer')}>
+                        Udyam Sakhi Portal ↗
+                      </button>
+                      <button className="btn" style={{ background: 'white', color: '#9a3412', border: '1px solid #9a3412', borderRadius: '10px', padding: '8px 12px', fontWeight: '600', cursor: 'pointer' }}
+                        onClick={() => window.open('https://www.standupmitra.in/', '_blank', 'noopener,noreferrer')}>
+                        Stand-Up India ↗
+                      </button>
+                      <button className="btn" style={{ background: 'white', color: '#9a3412', border: '1px solid #9a3412', borderRadius: '10px', padding: '8px 12px', fontWeight: '600', cursor: 'pointer' }}
+                        onClick={() => window.open('https://www.mudra.org.in/', '_blank', 'noopener,noreferrer')}>
+                        PMMY (Shishu) ↗
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '16px', background: '#ecfccb', borderRadius: '16px', border: '1px solid #d9f99d' }}>
+                    <h4 style={{ margin: '0 0 12px 0', color: '#365314' }}>📊 Engagement & Transparency</h4>
+                    <div style={{ marginBottom: '10px', fontSize: '12px', color: '#365314' }}>Entrepreneurial Roadmap</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', fontSize: '11px', color: '#365314', marginBottom: '8px' }}>
+                      <div style={{ background: '#bbf7d0', padding: '6px', borderRadius: '8px', textAlign: 'center' }}>Loan Requested</div>
+                      <div style={{ background: '#fde68a', padding: '6px', borderRadius: '8px', textAlign: 'center' }}>Disbursal</div>
+                      <div style={{ background: '#ddd6fe', padding: '6px', borderRadius: '8px', textAlign: 'center' }}>Repayment Rewards</div>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#365314' }}>Direct Disbursal via UPI or Bank Transfer</div>
+                    <div style={{ fontSize: '12px', color: '#365314' }}>ViyaStree Ledger builds your Trust Score with daily income/expense logs</div>
+                  </div>
+
+                  <div style={{ padding: '16px', background: '#fef2f2', borderRadius: '16px', border: '1px solid #fecaca' }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#7f1d1d' }}>📝 Business Mindset Quiz</h4>
+                    <div style={{ fontSize: '13px', color: '#7f1d1d', marginBottom: '10px' }}>
+                      What is the best way to use your first business profit?
+                    </div>
+                    <div style={{ display: 'grid', gap: '8px' }}>
+                      <button
+                        className="btn"
+                        style={{ background: businessMindsetAnswers.profit === 'a' ? '#ef4444' : 'white', color: businessMindsetAnswers.profit === 'a' ? 'white' : '#7f1d1d', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px', fontWeight: '600' }}
+                        onClick={() => setBusinessMindsetAnswers({ profit: 'a' })}
+                      >
+                        A) Spend it on household items
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ background: businessMindsetAnswers.profit === 'b' ? '#16a34a' : 'white', color: businessMindsetAnswers.profit === 'b' ? 'white' : '#14532d', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '8px 12px', fontWeight: '600' }}
+                        onClick={() => setBusinessMindsetAnswers({ profit: 'b' })}
+                      >
+                        B) Re-invest in tools/stock and save for EMI
+                      </button>
+                    </div>
+                    {businessMindsetAnswers.profit === 'b' && (
+                      <div style={{ marginTop: '8px', fontSize: '12px', color: '#166534', fontWeight: '700' }}>
+                        ✓ Financial Literacy Badge unlocked — reduces interest on your next growth loan
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    className="btn"
+                    style={{ background: COLORS.primary, color: 'white', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
+                    onClick={() => setUdyamModal({ type: 'apply' })}
+                  >
+                    Apply Now
+                  </button>
                 </div>
               )}
 
               {udyamModal.type === 'startup' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{ textAlign: 'center', padding: '20px', background: '#f8fafc', borderRadius: '16px', border: '2px dashed #cbd5e1' }}>
-                    <div style={{ fontSize: '40px', marginBottom: '8px' }}>🤖</div>
-                    <h4 style={{ margin: '0 0 8px 0' }}>AI Business Architect</h4>
-                    <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: COLORS.textSecondary }}>Describe your idea (e.g., "Tiffin Service") and get a full plan instantly.</p>
-                    <input type="text" placeholder="Enter business idea..." style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '12px' }} />
-                    <button className="btn" style={{ background: COLORS.accent, color: 'white', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: '600', width: '100%', cursor: 'pointer' }}>Generate Plan ✨</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  <div style={{ padding: '18px', borderRadius: '16px', background: '#f8fafc', border: '2px dashed #cbd5e1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                      <h4 style={{ margin: 0, color: COLORS.textPrimary }}>Path to Prosperity — Startup Guide</h4>
+                      <button
+                        className="btn"
+                        style={{ background: COLORS.primary, color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer' }}
+                        onClick={() => playVoiceHindi('नमस्ते! यह स्टार्टअप गाइड आपको कदम-दर-कदम सही रास्ता दिखाएगा। आप बोलें, हम लिखेंगे।')}
+                      >
+                        🔊 सुनें
+                      </button>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '13px', color: COLORS.textSecondary }}>
+                      A unified, step-by-step roadmap to turn your skills into income and financial independence.
+                    </p>
                   </div>
+
+                  {/* Step 1 */}
+                  <div style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: COLORS.textPrimary, marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Step 1: Hunar Se Vyapaar (Mapping Your Skills)
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#475569', marginBottom: '10px' }}>
+                      Skill Audit: What are you good at? (Cooking, Stitching, Digital Data Entry, Teaching)
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Your skills..."
+                      value={businessPlan.idea}
+                      onChange={(e) => setBusinessPlan(prev => ({ ...prev, idea: e.target.value }))}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '10px' }}
+                    />
+                    <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Shiksha Linkage:</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                      {completedSkills.length > 0 ? (
+                        completedSkills.map(skill => (
+                          <span key={skill} style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '600' }}>
+                            {skill.replace(/_/g, ' ')}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>No skills imported yet. Complete Shiksha modules to auto-link here.</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#475569', marginBottom: '6px' }}>The “Why”:</div>
+                    <input
+                      type="text"
+                      placeholder="Support family, build savings, learn a new trade..."
+                      value={businessPlan.purpose}
+                      onChange={(e) => setBusinessPlan(prev => ({ ...prev, purpose: e.target.value }))}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    />
+                    <button
+                      className="btn"
+                      style={{ marginTop: '8px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer', color: '#334155' }}
+                      onClick={() => playVoiceHindi('यह क्यों? क्या आप अपने परिवार का सहारा बनना चाहती हैं, बचत बढ़ाना चाहती हैं, या नया कौशल सीखना चाहती हैं?')}
+                    >
+                      🔊 सुनें (Why)
+                    </button>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div style={{ background: '#fff7ed', borderRadius: '14px', padding: '16px', border: '1px solid #fed7aa' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#9a3412', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Step 2: Bazaar Ki Pehchaan (Market Understanding)
+                    </div>
+                    <ul style={{ margin: '0 0 10px 0', paddingLeft: '18px', fontSize: '13px', color: '#78350f', lineHeight: '1.6' }}>
+                      <li>Catering/Food: nearby school or office for home-cooked lunch?</li>
+                      <li>Tailoring: local boutiques needing embroidery work?</li>
+                      <li>Digital Services: WhatsApp Business for local shops?</li>
+                    </ul>
+                    <div style={{ fontSize: '13px', color: '#78350f', marginBottom: '8px' }}>Who will buy from you?</div>
+                    <input
+                      type="text"
+                      placeholder="Neighbors, local shops, online customers..."
+                      value={businessPlan.market}
+                      onChange={(e) => setBusinessPlan(prev => ({ ...prev, market: e.target.value }))}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    />
+                  </div>
+
+                  {/* Step 3 */}
+                  <div style={{ background: '#f0f9ff', borderRadius: '14px', padding: '16px', border: '1px solid #bae6fd' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#0c4a6e', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Step 3: Sahi Sadan (Financial Planning & Funding)
+                    </div>
+                  <div style={{ fontSize: '13px', color: '#0f172a', marginBottom: '8px' }}>Cash In / Cash Out (daily)</div>
+                  <input
+                    type="text"
+                    placeholder="Tools needed (e.g., sewing machine, smartphone, raw materials)"
+                    value={businessPlan.tools}
+                    onChange={(e) => setBusinessPlan(prev => ({ ...prev, tools: e.target.value }))}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '10px' }}
+                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+                      <input
+                        type="text"
+                        placeholder="Daily cost (₹)"
+                        value={businessPlan.cost}
+                        onChange={(e) => setBusinessPlan(prev => ({ ...prev, cost: e.target.value }))}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Daily sales (₹)"
+                        value={businessPlan.sales}
+                        onChange={(e) => setBusinessPlan(prev => ({ ...prev, sales: e.target.value }))}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                      />
+                    </div>
+                    {estimatedProfit !== null && (
+                      <div style={{ fontSize: '13px', color: '#0f766e', fontWeight: '700', marginBottom: '10px' }}>
+                        Estimated Daily Profit: ₹{estimatedProfit}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        className="btn"
+                        style={{ background: COLORS.primary, color: 'white', border: 'none', borderRadius: '10px', padding: '10px 14px', fontWeight: '600' }}
+                        onClick={() => setUdyamModal({ type: 'apply' })}
+                      >
+                        💰 Access Seed Support (₹2k–₹10k)
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ background: 'white', color: '#0c4a6e', border: '1px solid #0c4a6e', borderRadius: '10px', padding: '10px 14px', fontWeight: '600' }}
+                        onClick={() => window.open('https://www.standupmitra.in/', '_blank', 'noopener,noreferrer')}
+                      >
+                        Stand-Up India ↗
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div style={{ background: '#f8fafc', borderRadius: '14px', padding: '16px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: COLORS.textPrimary, marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Step 4: Digital Pehchaan (Marketing & Identity)
+                    </div>
+                    <ul style={{ margin: '0 0 10px 0', paddingLeft: '18px', fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>
+                      <li>WhatsApp Business setup & digital catalog</li>
+                      <li>ViyaStree QR for “Verified Women Entrepreneur” badge</li>
+                      <li>Social selling basics (Instagram/Facebook)</li>
+                    </ul>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        className="btn"
+                        style={{ background: 'white', border: `1px solid ${COLORS.primary}`, color: COLORS.primary, borderRadius: '10px', padding: '10px 14px', fontWeight: '600' }}
+                        onClick={() => window.open('https://www.whatsapp.com/business/', '_blank', 'noopener,noreferrer')}
+                      >
+                        WhatsApp Business Guide
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ background: COLORS.accent, color: 'white', border: 'none', borderRadius: '10px', padding: '10px 14px', fontWeight: '600' }}
+                        onClick={() => window.alert('QR generation will be available in Phase 2.')}
+                      >
+                        Generate QR
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Step 5 */}
+                  <div style={{ background: '#fff1f2', borderRadius: '14px', padding: '16px', border: '1px solid #fecdd3' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#7f1d1d', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Step 5: Suraksha aur Niti (Legal & Safety Shield)
+                    </div>
+                    <ul style={{ margin: '0 0 10px 0', paddingLeft: '18px', fontSize: '13px', color: '#7f1d1d', lineHeight: '1.6' }}>
+                      <li>Business rights & harassment-free workplace laws</li>
+                      <li>Digital safety for payments and accounts</li>
+                      <li>Udyam/MSME registration to unlock benefits</li>
+                    </ul>
+                    <button
+                      className="btn"
+                      style={{ background: '#7f1d1d', color: 'white', border: 'none', borderRadius: '10px', padding: '10px 14px', fontWeight: '600' }}
+                      onClick={() => window.open('https://udyamregistration.gov.in/', '_blank', 'noopener,noreferrer')}
+                    >
+                      Start Udyam Registration ↗
+                    </button>
+                  </div>
+
+                  {/* Success Tree */}
+                  <div style={{ padding: '14px', background: '#ecfccb', borderRadius: '12px', border: '1px solid #d9f99d', fontSize: '13px', color: '#365314' }}>
+                    <strong>Success Tree:</strong> As you complete each phase, your tree grows and blooms. After your first sale, the <strong>Impact</strong> badge unlocks in your dashboard.
+                  </div>
+
+                  {planError && (
+                    <div style={{ padding: '10px 12px', background: '#fee2e2', borderRadius: '10px', border: '1px solid #fecaca', fontSize: '12px', color: '#b91c1c' }}>
+                      {planError}
+                    </div>
+                  )}
+
+                  <button
+                    className="btn"
+                    style={{ background: COLORS.accent, color: 'white', padding: '12px 20px', borderRadius: '10px', border: 'none', fontWeight: '700', width: '100%', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (!businessPlan.idea || !businessPlan.market || !businessPlan.tools) {
+                        setPlanError('Please fill in Skill Audit, Market, and Resource Map to generate your roadmap.')
+                        return
+                      }
+                      setPlanError('')
+                      setPlanGenerated(true)
+                    }}
+                  >
+                    Generate Success Roadmap ✨
+                  </button>
+
+                  {planGenerated && (
+                    <div style={{ padding: '16px', background: '#f0f9ff', borderRadius: '16px', border: '1px solid #bae6fd' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#0c4a6e' }}>✅ Your Success Roadmap (Preview)</h4>
+                      <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>
+                        <div><strong>Skills:</strong> {businessPlan.idea}</div>
+                        <div><strong>Market:</strong> {businessPlan.market}</div>
+                        <div><strong>Resources:</strong> {businessPlan.tools}</div>
+                        {businessPlan.purpose && <div><strong>Why:</strong> {businessPlan.purpose}</div>}
+                        {estimatedProfit !== null && (
+                          <div><strong>Estimated Daily Profit:</strong> ₹{estimatedProfit}</div>
+                        )}
+                      </div>
+                      <div style={{ marginTop: '12px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button className="btn" style={{ background: COLORS.primary, color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px', fontWeight: 600 }}>
+                          Save to Vault
+                        </button>
+                        <button className="btn" style={{ background: 'white', color: COLORS.primary, border: `1px solid ${COLORS.primary}`, borderRadius: '8px', padding: '8px 14px', fontWeight: 600 }}>
+                          Download PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {udyamModal.type === 'apply' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: COLORS.textPrimary }}>8-Step Microfunding Flow</h4>
+                    <ol style={{ margin: 0, paddingLeft: '18px', color: '#475569', fontSize: '13px', lineHeight: '1.6' }}>
+                      <li>Purpose selection</li>
+                      <li>Eligibility light-check</li>
+                      <li>5-minute literacy module</li>
+                      <li>Select funding tier</li>
+                      <li>Upload plan from GuruSakhi vault</li>
+                      <li>Share basic business details</li>
+                      <li>Choose payout method</li>
+                      <li>Review & submit</li>
+                    </ol>
+                  </div>
+                  {udyamModal.step === 1 && (
+                    <div style={{ padding: '16px', background: '#f0f9ff', borderRadius: '16px', border: '1px solid #bae6fd' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#0c4a6e' }}>Step 1: Purpose Selection</h4>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#0f172a' }}>
+                        Choose your funding intent so we can recommend the right support.
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {['Home business', 'Sewing machine', 'Laptop for digital work', 'Emergency livelihood support'].map(intent => (
+                          <button
+                            key={intent}
+                            className="btn"
+                            style={{
+                              background: fundingIntent === intent ? COLORS.primary : 'white',
+                              color: fundingIntent === intent ? 'white' : COLORS.textSecondary,
+                              border: `1px solid ${COLORS.border}`,
+                              borderRadius: '999px',
+                              padding: '6px 12px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              fontWeight: 600
+                            }}
+                            onClick={() => setFundingIntent(intent)}
+                          >
+                            {intent}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        className="btn"
+                        style={{
+                          marginTop: '12px',
+                          background: COLORS.primary,
+                          color: 'white',
+                          padding: '10px 16px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          fontWeight: '600',
+                          opacity: fundingIntent ? 1 : 0.6,
+                          cursor: fundingIntent ? 'pointer' : 'not-allowed'
+                        }}
+                        disabled={!fundingIntent}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 2 }))}
+                      >
+                        Continue to Step 2
+                      </button>
+                    </div>
+                  )}
+                  {udyamModal.step === 2 && (
+                    <div style={{ padding: '16px', background: '#ecfdf5', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#166534' }}>Step 2: Eligibility Light-Check</h4>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#14532d' }}>
+                        Self-declaration + Aadhaar. No heavy KYC required. Skill progress improves approval chances.
+                      </p>
+                      <div style={{ display: 'grid', gap: '10px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#14532d' }}>
+                          <input type="checkbox" defaultChecked={aadhaarLinked} />
+                          Aadhaar linked for direct benefit transfer
+                        </label>
+                        <input type="text" placeholder="Full Name (as per Aadhaar)" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0' }} />
+                        <input type="text" placeholder="Registered Mobile Number" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #bbf7d0' }} />
+                      </div>
+                      <button
+                        className="btn"
+                        style={{ marginTop: '12px', background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 3 }))}
+                      >
+                        Continue to Step 3
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 3 && (
+                    <div style={{ padding: '16px', background: '#fff7ed', borderRadius: '16px', border: '1px solid #fed7aa' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#92400e' }}>Step 3: Literacy Nudge (5 min)</h4>
+                      <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#78350f' }}>
+                        Short audio-visual guidance on budgeting and repayment.
+                      </p>
+                      <button
+                        className="btn"
+                        style={{ background: literacyDone ? '#16a34a' : COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => {
+                          playVoiceHindi('आय और खर्च का हिसाब रखें, समय पर किश्त जमा करें, और अपने व्यवसाय को सुरक्षित रखें।')
+                          setLiteracyDone(true)
+                        }}
+                      >
+                        {literacyDone ? '✓ Module Completed' : 'Start Audio Module'}
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ marginTop: '10px', background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600', opacity: literacyDone ? 1 : 0.6 }}
+                        disabled={!literacyDone}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 4 }))}
+                      >
+                        Continue to Step 4
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 4 && (
+                    <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: COLORS.textPrimary }}>Step 4: Select Funding Tier</h4>
+                      <div style={{ display: 'grid', gap: '10px', fontSize: '13px', color: '#475569' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input type="radio" name="tier" /> Zero-Interest Seed Support (₹2k–₹10k)
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input type="radio" name="tier" /> Low-Interest Growth Loan (₹10k–₹50k)
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input type="radio" name="tier" /> Group-Backed Microloan (SHG)
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input type="radio" name="tier" /> Grant-Linked Funding (CSR/NGO)
+                        </label>
+                      </div>
+                      <button className="btn" style={{ marginTop: '12px', background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 5 }))}
+                      >
+                        Continue to Step 5
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 5 && (
+                    <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: COLORS.textPrimary }}>Step 5: Upload Plan from GuruSakhi Vault</h4>
+                      <input type="file" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                      <button className="btn" style={{ marginTop: '12px', background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 6 }))}
+                      >
+                        Continue to Step 6
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 6 && (
+                    <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: COLORS.textPrimary }}>Step 6: Share Basic Business Details</h4>
+                      <div style={{ display: 'grid', gap: '10px' }}>
+                        <input type="text" placeholder="Business name" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                        <input type="text" placeholder="Business category" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                        <input type="text" placeholder="Location" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                      </div>
+                      <button className="btn" style={{ marginTop: '12px', background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 7 }))}
+                      >
+                        Continue to Step 7
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 7 && (
+                    <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: COLORS.textPrimary }}>Step 7: Choose Payout Method</h4>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                        <input type="radio" name="payout" /> Bank Transfer
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                        <input type="radio" name="payout" /> UPI
+                      </label>
+                      <button className="btn" style={{ marginTop: '12px', background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 8 }))}
+                      >
+                        Continue to Step 8
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 8 && (
+                    <div style={{ padding: '16px', background: '#ecfdf5', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#166534' }}>Step 8: Review & Submit</h4>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#14532d' }}>
+                        Suggested: 6 monthly instalments with a 2-week grace period.
+                      </p>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#14532d' }}>
+                        Submit your application for verification. We’ll update you within 3–5 business days.
+                      </p>
+                      <button className="btn" style={{ background: COLORS.primary, color: 'white', padding: '10px 16px', borderRadius: '10px', border: 'none', fontWeight: '600' }}
+                        onClick={() => setUdyamModal(prev => ({ ...prev, step: 'submitted' }))}
+                      >
+                        Submit for Approval
+                      </button>
+                    </div>
+                  )}
+
+                  {udyamModal.step === 'submitted' && (
+                    <div style={{ padding: '16px', background: '#f0f9ff', borderRadius: '16px', border: '1px solid #bae6fd' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#0c4a6e' }}>✅ Application Submitted</h4>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}>
+                        Thanks! Your microfunding request is now under review.
+                      </p>
+                    </div>
+                  )}
+
+                  {!udyamModal.step && (
+                    <button
+                      className="btn"
+                      style={{ background: COLORS.primary, color: 'white', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
+                      onClick={() => setUdyamModal(prev => ({ ...prev, step: 1 }))}
+                    >
+                      Proceed to Step 1
+                    </button>
+                  )}
                 </div>
               )}
 
