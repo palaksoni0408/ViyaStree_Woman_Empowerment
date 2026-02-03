@@ -90,14 +90,19 @@ export function AuthProvider({ children }) {
             const data = await safeJson(res) || {}
 
             if (!res.ok) {
-                throw new Error(data.error || 'Signup failed')
+                const msg = data.error || data.message || `Signup failed (${res.status})`
+                throw new Error(msg)
             }
 
             localStorage.setItem('token', data.token)
             setUser(data.user)
             return { success: true }
         } catch (error) {
-            return { success: false, error: error.message }
+            const message = error.message || 'Signup failed'
+            if (message.includes('fetch') || message.includes('Network')) {
+                return { success: false, error: 'Cannot reach server. Check that the backend is running and try again.' }
+            }
+            return { success: false, error: message }
         }
     }
 
