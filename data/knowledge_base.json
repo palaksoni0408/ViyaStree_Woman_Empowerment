@@ -1,0 +1,26 @@
+[
+  {
+    "category": "legal_awareness",
+    "topic": "maternity_leave",
+    "keywords": ["maternity", "leave", "pregnancy", "rights"],
+    "content": {
+      "summary": "The Maternity Benefit Act, 1961 provides paid leave for eligible women employees.",
+      "keyPoints": ["26 weeks paid leave for first two children", "12 weeks for subsequent children", "Applies to establishments with 10+ employees"],
+      "lawReference": "Maternity Benefit Act, 1961"
+    },
+    "relatedTopics": ["workplace harassment", "equal pay"],
+    "lastUpdated": "2026-01-01T00:00:00Z"
+  },
+  {
+    "category": "legal_awareness",
+    "topic": "equal_pay",
+    "keywords": ["equal", "pay", "remuneration", "gender"],
+    "content": {
+      "summary": "The Equal Remuneration Act, 1976 mandates equal pay for men and women for same work.",
+      "keyPoints": ["Prohibits wage discrimination based on gender", "Applies to all establishments"],
+      "lawReference": "Equal Remuneration Act, 1976"
+    },
+    "relatedTopics": ["maternity_leave", "workplace_harassment"],
+    "lastUpdated": "2026-01-01T00:00:00Z"
+  }
+]
